@@ -1,28 +1,15 @@
 package com.example.Controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import com.example.DTO.ImovelRequestDTO;
 import com.example.DTO.ImovelResponseDTO;
-import com.example.Model.Imovel;
 import com.example.Service.ImovelService;
-
-import jakarta.validation.Valid;
 
 import java.net.URI;
 import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PutMapping;
-
-
-
 
 @RestController 
 @RequestMapping("/imoveis")
@@ -35,37 +22,30 @@ public class ImovelController {
     }
 
     @GetMapping 
-    public List<Imovel> listar(){
+    public List<ImovelResponseDTO> listar(){
         return service.listar();
     }
 
     @GetMapping("/{id}")
-    public Imovel buscarPorId(@PathVariable Long id){
+    public ImovelResponseDTO buscarPorId(@PathVariable Long id){
         return service.buscarPorId(id);
     }
    
-   @PostMapping 
-   public ResponseEntity<ImovelResponseDTO> criar(@Valid @RequestBody ImovelRequestDTO dto){
-    Imovel salvo = service.criar(dto);
+    @PostMapping 
+    public ResponseEntity<ImovelResponseDTO> criar(@Valid @RequestBody ImovelRequestDTO dto){
+        ImovelResponseDTO responseDTO = service.criar(dto);
+        var uri = URI.create("/imoveis/" + responseDTO.getId());
+        return ResponseEntity.created(uri).body(responseDTO);
+    }
 
-    ImovelResponseDTO responseDTO = new ImovelResponseDTO();
-    responseDTO.setId(salvo.getId());
-    responseDTO.setEndereco(salvo.getEndereco());
-    responseDTO.setDescricao(salvo.getDescricao());
-    responseDTO.setValorAluguel(salvo.getValorAluguel());
-    
-    var uri = URI.create("/imoveis/" + salvo.getId());
-    return ResponseEntity.created(uri).body(responseDTO);
-   }
+    @PutMapping("/{id}")
+    public ImovelResponseDTO atualizar(@PathVariable Long id, @Valid @RequestBody ImovelRequestDTO dto){
+        return service.atualizar(id, dto);
+    }
 
-   @PutMapping("/{id}")
-   public Imovel atualizar(@PathVariable Long id, @RequestBody Imovel novo){
-    return service.atualizar(id, novo);
-   }
-
-   @DeleteMapping ("/{id}")
-   public ResponseEntity<Void> deletar(@PathVariable Long id){
-    service.deletar(id);
-    return ResponseEntity.noContent().build();
-   }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id){
+        service.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
 }

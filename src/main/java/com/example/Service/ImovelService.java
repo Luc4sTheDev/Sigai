@@ -16,8 +16,10 @@ public class ImovelService {
         this.repository = repository;
     }
 
-    public List<Imovel> listar() {
-        return repository.findAll();
+    public List<ImovelResponseDTO> listar() {
+        return repository.findAll().stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
     
     public ImovelResponseDTO buscarPorId(Long id) {
@@ -27,9 +29,25 @@ public class ImovelService {
     }
 
     public ImovelResponseDTO criar(ImovelRequestDTO dto) {
-    Imovel salvo = repository.save(toEntity(dto));
-    return toResponseDTO(salvo);
-}
+        Imovel salvo = repository.save(toEntity(dto));
+        return toResponseDTO(salvo);
+    }
+
+    public ImovelResponseDTO atualizar(Long id, ImovelRequestDTO dto){
+        Imovel imovel = repository.findById(id)
+                .orElseThrow(() -> new ImovelNaoEncontradoException(id));
+        
+        imovel.setDescricao(dto.getDescricao());
+        imovel.setEndereco(dto.getEndereco());
+        imovel.setValorAluguel(dto.getValorAluguel());
+        
+        Imovel atualizado = repository.save(imovel);
+        return toResponseDTO(atualizado);
+    }
+
+    public void deletar(Long id){
+        repository.deleteById(id);
+    }
 
     private Imovel toEntity(ImovelRequestDTO dto) {
         Imovel imovel = new Imovel();
@@ -46,16 +64,5 @@ public class ImovelService {
         dto.setEndereco(imovel.getEndereco());
         dto.setValorAluguel(imovel.getValorAluguel());
         return dto;
-    }
-
-    public Imovel atualizar(Long id, Imovel novo){
-        return repository.findById(id).map(existente -> {
-            novo.setId(id);
-            return repository.save(novo);
-        }).orElseThrow(() -> new ImovelNaoEncontradoException(id));
-    }
-
-    public void deletar(Long id){
-        repository.deleteById(id);
     }
 }
